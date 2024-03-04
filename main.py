@@ -19,19 +19,22 @@ f = urllib.request.urlopen(req)
 soup = BeautifulSoup(f, "html.parser")
 # Finds the names of all the dresses on the page
 dress_name = soup.findAll("h2", attrs={"class":"goods-name"})
+price = soup.findAll("div", attrs={"class":"p_price"})
 # Prints the names
-#print (dress_name)
+dresses = []
+costs = []
+for d in dress_name:
+     dresses += [(d.text.strip())]
 
+for c in price:
+    costs += [c.text.strip()]
 # Creates a new file called Prom Dresses to store the prom dress information
-file = open("Prom_Dresses.csv", "w")
+dress_file = open("Prom_Dresses.csv", "w")
 # creates a writer to put the information in the spreadsheet based on file
-writer = csv.writer(file)
+writer = csv.writer(dress_file)
 # Creates a header
 writer.writerow(["Dress"])
 # Goes through each dress name and puts it in the file
-for d in zip(dress_name):
-    writer.writerow([d[len(d)-1].text.strip()])
-    print(d[len(d)-1].text.strip())
-
-# closes file
-file.close()
+for n, p in zip(dresses, costs):
+    writer.writerow([n, p])
+dress_file.close()
