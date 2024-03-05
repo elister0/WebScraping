@@ -1,39 +1,59 @@
-# Importing classes; Beautiful Soup library for webscraping, urllib.request library
-# for accessing urls, csv library for turning database into a spreadsheet
 from bs4 import BeautifulSoup
 import urllib.request
 import csv
-import re
-import os
-# Makes a request to access the url utilizing a user agent to prevent error 403
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-c', '--color', type = str, default = False)
+parser.add_argument('-mi', '--min', type = int, default = False)
+parser.add_argument('-ma', '--max', type = int, default = False)
+args = parser.parse_args()
+
+color = args.color
+minimum = args.min
+maximum = args.max
+
+base_url = "https://www.jjshouse.com/all/prom-dresses?sort=new-arrivals"
+
+if color:
+    base_url = base_url[0:42] + "/color/" + color +"?"+ base_url[42:]
+
+if (minimum and not maximum):
+    base_url = base_url + "&price=" + str(minimum) + "-269"
+elif(minimum and maximum):
+    base_url = base_url + "&price=" + str(minimum) + "-" + str(maximum)
+elif(maximum):
+    base_url = base_url + "&price=59-" + str(maximum)
+
+print(base_url)
 req = urllib.request.Request(
-    "https://www.jjshouse.com/all/prom-dresses/color/dark-green?sort=new-arrivals",
+    base_url,
     data=None,
     headers={
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
     }
 )
 
-# Opens the url and stores inspect items in f
+
 f = urllib.request.urlopen(req)
-# Creates a beautiful soup object for f
+
 soup = BeautifulSoup(f, "html.parser")
-# Finds the names of all the dresses on the page
+
 dress_name = soup.findAll("h2", attrs={"class":"goods-name"})
 price = soup.findAll("div", attrs={"class":"p_price"})
 image = soup.findAll("a", attrs = {"class":"mt-common-click mt-common-exposure"})
-# Prints the names
+
 
 dresses = []
 costs = []
 images = []
+count = 0
 for d in dress_name:
      dresses += [(d.text.strip())]
 
 for c in price:
     costs += [c.text.strip()]
 
-# Create a directory to save the images
 for i in image:
     try:
         first=str(i).index("data-src=")+10
@@ -41,17 +61,15 @@ for i in image:
         images += [str(i)[first:last]]
 
     except:
-        print("no")
-# Iterate over the image links and download the images
+        count+= 1
 
 
-# Creates a new file called Prom Dresses to store the prom dress information
 dress_file = open("Prom_Dresses.csv", "w")
-# creates a writer to put the information in the spreadsheet based on file
+
 writer = csv.writer(dress_file)
-# Creates a header
-writer.writerow(["Dress"])
-# Goes through each dress name and puts it in the file
+
+writer.writerow(["Dress, Cost, Image"])
+
 for n, p, i in zip(dresses, costs, images):
     writer.writerow([n, p, i])
 dress_file.close()
